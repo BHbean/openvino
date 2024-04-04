@@ -87,6 +87,13 @@ else()
 endif()
 ov_option(ENABLE_MLAS_FOR_CPU "Enable MLAS for OpenVINO CPU Plugin" ${ENABLE_MLAS_FOR_CPU_DEFAULT})
 
+if(RISCV64_THEAD)
+    set(ENABLE_SHL_FOR_CPU_DEFAULT ON)
+else()
+    set(ENABLE_SHL_FOR_CPU_DEFAULT OFF)
+endif()
+ov_dependent_option(ENABLE_SHL_FOR_CPU "Enable SHL for OpenVINO CPU Plugin" ${ENABLE_SHL_FOR_CPU_DEFAULT} "RISCV64" OFF)
+
 add_subdirectory(thirdparty)
 
 if(WIN32)
@@ -190,11 +197,17 @@ if (ENABLE_MLAS_FOR_CPU)
     target_include_directories(${TARGET_NAME} SYSTEM PRIVATE $<TARGET_PROPERTY:mlas,INCLUDE_DIRECTORIES>)
     add_definitions(-DOV_CPU_WITH_MLAS)
 endif()
+
 if (ENABLE_SNIPPETS_LIBXSMM_TPP)
     target_compile_definitions(xsmm PRIVATE __BLAS=0)
     target_link_libraries(${TARGET_NAME} PRIVATE xsmm)
     target_include_directories(${TARGET_NAME} SYSTEM PRIVATE $<TARGET_PROPERTY:xsmm,INCLUDE_DIRECTORIES>)
 endif ()
+
+if(ENABLE_SHL_FOR_CPU)
+    target_link_libraries(${TARGET_NAME} PRIVATE shl)
+endif()
+
 target_include_directories(${TARGET_NAME} SYSTEM PRIVATE $<TARGET_PROPERTY:dnnl,INCLUDE_DIRECTORIES>)
 
 # Temporal solution to use template reference implementations in cases where optimizied implementation
@@ -283,6 +296,10 @@ if(BUILD_SHARED_LIBS)
 
     if(ENABLE_MLAS_FOR_CPU)
         target_include_directories(${TARGET_NAME}_obj SYSTEM PUBLIC $<TARGET_PROPERTY:mlas,INCLUDE_DIRECTORIES>)
+    endif()
+
+    if(ENABLE_SHL_FOR_CPU)
+        target_include_directories(${TARGET_NAME}_obj SYSTEM PUBLIC $<TARGET_PROPERTY:shl,INTERFACE_INCLUDE_DIRECTORIES>)
     endif()
 
     ov_set_threading_interface_for(${TARGET_NAME}_obj)
