@@ -43,6 +43,7 @@ impl_desc_type parse_impl_name(std::string impl_desc_name) {
     SEARCH_WORD_2(dw, _dw);
     SEARCH_WORD(reorder);
     SEARCH_WORD(sparse);
+    SEARCH_WORD(shl);
     SEARCH_WORD(acl);
     SEARCH_WORD(shl);
     SEARCH_WORD(asimd);
