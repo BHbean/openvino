@@ -79,7 +79,7 @@ ShlFCExecutor::ShlFCExecutor(const FCAttrs& attrs,
     // Init FC params
     params = ShlFCParams(sess, CSINN_RVV);
 
-    OPENVINO_ASSERT(csinn_fullyconnected_init(src.get(), dst.get(), wei.get(), bias.get(), params.get()) == CSINN_TRUE,
+    OPENVINO_ASSERT(csinn_fullyconnected_init(src.get(), dst.get(), wei.get(), bias.get(), static_cast<csinn_fc_params*>(params.get())) == CSINN_TRUE,
                     "ShlFCExecutor: failed to init FC");
 }
 
@@ -95,7 +95,7 @@ void ShlFCExecutor::execute(const MemoryArgs& memory) {
     wei.setData(memory.at(ARG_WEI)->getData());
     dst.setData(memory.at(ARG_DST)->getData());
 
-    OPENVINO_ASSERT(csinn_fullyconnected(src.get(), dst.get(), wei.get(), bias.get(), params.get()) == CSINN_TRUE,
+    OPENVINO_ASSERT(csinn_fullyconnected(src.get(), dst.get(), wei.get(), bias.get(), static_cast<csinn_fc_params*>(params.get())) == CSINN_TRUE,
                     "ShlFCExecutor: failed to execute");
 }
 
