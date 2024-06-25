@@ -17,6 +17,13 @@ inline void log_unsupported_prec(const std::vector<MemoryDescPtr>& srcDescs,
                           "] and dst precision: ", dstDescs[0]->getPrecision().to_string(), " is not supported");
 }
 
+bool ShlEltwiseExecutor::isEltwiseAlgorithmSupported(Algorithm algorithm) {
+    if (one_of(algorithm, Algorithm::EltwiseAdd)) {
+        return true;
+    }
+    return false;
+}
+
 bool ShlEltwiseExecutorBuilder::isSupported(const EltwiseAttrs& eltwiseAttrs,
                                             const std::vector<MemoryDescPtr>& srcDescs,
                                             const std::vector<MemoryDescPtr>& dstDescs) const {
