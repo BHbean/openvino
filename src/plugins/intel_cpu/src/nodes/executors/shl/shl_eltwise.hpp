@@ -27,6 +27,7 @@ using make_index_sequence = typename make_index_sequence_impl<N>::type;
 class ShlEltwiseExecutor : public EltwiseExecutor {
 public:
     explicit ShlEltwiseExecutor(const ExecutorContext::CPtr context);
+    static bool isEltwiseAlgorithmSupported(Algorithm algorithm);
 
     bool init(const EltwiseAttrs& eltwiseAttrs,
               const std::vector<MemoryDescPtr>& srcDescs,
