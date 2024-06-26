@@ -44,8 +44,8 @@ public:
 
     template<typename Func, typename... Args>
     void setFunc(Func&& initFunc, Func&& execFunc, Args&&... args) {
-        init_func = [this, initFunc, args...]() { callFun(initFunc, std::make_tuple(args...)); };
-        exec_func = [this, execFunc, args...]() { callFun(execFunc, std::make_tuple(args...)); };
+        init_func = [this, initFunc, args...]() { callFunc(initFunc, std::make_tuple(args...)); };
+        exec_func = [this, execFunc, args...]() { callFunc(execFunc, std::make_tuple(args...)); };
     }
 
 
@@ -54,7 +54,7 @@ private:
     impl_desc_type implType = impl_desc_type::shl;
     ShlSession sess = {};
     std::vector<ShlTensor> srcTensors, dstTensors;
-    IShlParams* params;
+    std::unique_ptr<IShlParams> params;
     std::function<void()> init_func;
     std::function<void()> exec_func;
 
