@@ -2528,7 +2528,7 @@ void Eltwise::initSupportedPrimitiveDescriptors() {
                                                                                      getInputShapeAtPort(i).getRank());
     }
 
-#if defined(OPENVINO_ARCH_ARM64)
+#if defined(OPENVINO_ARCH_ARM64) || defined(OPENVINO_ARCH_RISCV64)
     bool isBlockedApplicable = (!useJit) && one_of(getOutputShapeAtPort(0).getRank(), 1u, 3u, 4u, 5u);
 #else
     bool isBlockedApplicable = one_of(getOutputShapeAtPort(0).getRank(), 1u, 3u, 4u, 5u);
@@ -2547,7 +2547,7 @@ void Eltwise::initSupportedPrimitiveDescriptors() {
     inputNum = getParentEdges().size();
     currentInBlkDims.resize(inputNum);
 
-#if defined (OV_CPU_WITH_ACL)
+#if defined(OV_CPU_WITH_ACL)
     if (useAcl || useJit) {
     eltwiseAttrs = {algorithm, alpha, beta, gamma};
 
@@ -2574,7 +2574,7 @@ void Eltwise::initSupportedPrimitiveDescriptors() {
     }
 #endif
 
-#if defined (OV_CPU_WITH_SHL)
+#if defined(OV_CPU_WITH_SHL)
     if (useShl || useJit) {
     eltwiseAttrs = {algorithm, alpha, beta, gamma};
 
@@ -2816,6 +2816,7 @@ void Eltwise::execute(dnnl::stream strm) {
 
         aclExecPtr->exec(srcMemory, dstMemory, fqDataPtrs.data());
     } else if (shlExecPtr) {
+        printf("shlExecPtr successfully initialized!\n");
         std::vector<MemoryCPtr> srcMemory;
         for (size_t i = 0; i < getParentEdges().size(); i++) {
             srcMemory.push_back(getSrcMemoryAtPort(i));

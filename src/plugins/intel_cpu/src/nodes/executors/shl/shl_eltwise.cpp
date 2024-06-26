@@ -83,8 +83,8 @@ bool ShlEltwiseExecutor::init(const EltwiseAttrs &eltwiseAttrs,
 
     switch (shlEltwiseAttrs.algorithm) {
     case Algorithm::EltwiseAdd: 
-        params = &ShlDisoParams(sess, CSINN_RVV);
-        setFunc(csinn_add_init, csinn_add, srcTensors[0].get(), srcTensors[1].get(), dstTensors[0].get(), static_cast<csinn_fc_params*>(params->get()));
+        params = ov::intel_cpu::make_unique<ShlDisoParams>(sess, CSINN_RVV);
+        setFunc(csinn_add_init, csinn_add, srcTensors[0].get(), srcTensors[1].get(), dstTensors[0].get(), static_cast<csinn_diso_params*>(params->get()));
         break;
     default:
         OPENVINO_THROW("Unsupported operation type for SHL Eltwise executor: ",
@@ -92,6 +92,8 @@ bool ShlEltwiseExecutor::init(const EltwiseAttrs &eltwiseAttrs,
     }
 
     init_func();
+
+    return true;
 }
 
 void ShlEltwiseExecutor::exec(const std::vector<MemoryCPtr> &src,
