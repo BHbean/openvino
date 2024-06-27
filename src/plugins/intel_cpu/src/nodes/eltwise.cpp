@@ -2816,7 +2816,6 @@ void Eltwise::execute(dnnl::stream strm) {
 
         aclExecPtr->exec(srcMemory, dstMemory, fqDataPtrs.data());
     } else if (shlExecPtr) {
-        printf("shlExecPtr successfully initialized!\n");
         std::vector<MemoryCPtr> srcMemory;
         for (size_t i = 0; i < getParentEdges().size(); i++) {
             srcMemory.push_back(getSrcMemoryAtPort(i));
