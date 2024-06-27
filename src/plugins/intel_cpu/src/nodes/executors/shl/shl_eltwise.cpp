@@ -64,12 +64,17 @@ bool ShlEltwiseExecutorBuilder::isSupported(const EltwiseAttrs& eltwiseAttrs,
     return true;
 }
 
+ShlEltwiseExecutor::ShlEltwiseExecutor(const ExecutorContext::CPtr context) : EltwiseExecutor(context) {}
+
 bool ShlEltwiseExecutor::init(const EltwiseAttrs &eltwiseAttrs,
                               const std::vector<MemoryDescPtr> &srcDescs,
                               const std::vector<MemoryDescPtr> &dstDescs,
                               const std::vector<EltwisePostOp> &postOps) {
     if (!postOps.empty()) { return false; }
     shlEltwiseAttrs = eltwiseAttrs;
+
+    srcTensors = std::vector<ShlTensor>(srcDescs.size());
+    dstTensors = std::vector<ShlTensor>(dstDescs.size());
 
     // Allocate Shl session
     sess = ShlSession(CSINN_RM_LAYER);
