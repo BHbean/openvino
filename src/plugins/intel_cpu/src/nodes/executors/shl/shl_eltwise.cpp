@@ -89,16 +89,18 @@ bool ShlEltwiseExecutor::init(const EltwiseAttrs &eltwiseAttrs,
     switch (shlEltwiseAttrs.algorithm) {
     case Algorithm::EltwiseAdd: 
         params = ov::intel_cpu::make_unique<ShlDisoParams>(sess, CSINN_RVV);
-        setFunc(csinn_add_init, csinn_add, srcTensors[0].get(), srcTensors[1].get(), dstTensors[0].get(), static_cast<csinn_diso_params*>(params->get()));
+        std::cout << "Initializing..." << std::endl;
+        return csinn_add_init(srcTensors[0].get(), srcTensors[1].get(), dstTensors[0].get(), static_cast<csinn_diso_params*>(params->get())) == CSINN_TRUE;
+        // setFunc(csinn_add_init, csinn_add, srcTensors[0].get(), srcTensors[1].get(), dstTensors[0].get(), static_cast<csinn_diso_params*>(params->get()));
         break;
     default:
         OPENVINO_THROW("Unsupported operation type for SHL Eltwise executor: ",
                        static_cast<int>(shlEltwiseAttrs.algorithm));
     }
 
-    init_func();
+    // init_func();
 
-    return true;
+    return false;
 }
 
 void ShlEltwiseExecutor::exec(const std::vector<MemoryCPtr> &src,
@@ -106,12 +108,28 @@ void ShlEltwiseExecutor::exec(const std::vector<MemoryCPtr> &src,
                               const void *post_ops_data_) {
     for (size_t i = 0; i < src.size(); i++) {
         srcTensors[i].setData(src[i]->getData());
+        std::cout << *static_cast<float*>(srcTensors[i].getData()) << std::endl;
     }
     for (size_t i = 0; i < dst.size(); i++) {
         dstTensors[i].setData(dst[i]->getData());
+        std::cout << *static_cast<float*>(dstTensors[i].getData()) << std::endl;
     }
 
-    exec_func();
+    switch (shlEltwiseAttrs.algorithm) {
+    case Algorithm::EltwiseAdd:
+        std::cout << csinn_add(srcTensors[0].get(), srcTensors[1].get(), dstTensors[0].get(), static_cast<csinn_diso_params*>(params->get())) << std::endl;
+        // OPENVINO_ASSERT(csinn_add(srcTensors[0].get(), srcTensors[1].get(), dstTensors[0].get(), static_cast<csinn_diso_params*>(params->get())) == CSINN_TRUE,
+        //                 "ShlFCExecutor: failed to execute");
+        break;
+    default:
+        OPENVINO_THROW("Unsupported operation type for SHL Eltwise executor: ",
+                       static_cast<int>(shlEltwiseAttrs.algorithm));
+    }
+
+    for (size_t i = 0; i < dst.size(); i++) {
+        std::cout << *static_cast<float*>(dstTensors[i].getData()) << std::endl;
+    }
+    // exec_func();
 
     return;
 }
