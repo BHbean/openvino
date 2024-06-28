@@ -167,32 +167,75 @@ struct ShlTensor : public ShlStructure<csinn_tensor*> {
 #endif
 };
 
+// virtual base class for different kinds of params
+struct IShlParams {
+public:
+    virtual ~IShlParams() = default;
+    virtual void reset(void* t) = 0;
+    virtual void* get(bool allow_empty = false) const = 0;
+    virtual void setAPI(csinn_api_enum api) = 0;
+};
+
+template <typename T, typename traits = ShlStructureTraits<T>>
+struct ShlParams : public ShlStructure<T>, public IShlParams {
+    ShlParams() {
+        T params = static_cast<T>(csinn_alloc_params(sizeof(typename std::remove_pointer<T>::type), nullptr));
+        OPENVINO_ASSERT(params != nullptr, "Failed to create csinn_params");
+        this->reset(params);
+    }
+
+    ShlParams(const ShlSession& session) {
+        T params = static_cast<T>(csinn_alloc_params(sizeof(typename std::remove_pointer<T>::type), session.get()));
+        OPENVINO_ASSERT(params != nullptr, "Failed to create csinn_params");
+        this->reset(params);
+    }
+
+    ShlParams(const ShlSession& session, csinn_api_enum api) : ShlParams(session) {
+        setAPI(api);
+    }
+
+    void reset(void* t) override {
+        this->ShlStructure<T, traits>::reset(static_cast<T>(t));
+    }
+
+    void* get(bool allow_empty = false) const override {
+        return this->ShlStructure<T, traits>::get(allow_empty);
+    }
+
+    void setAPI(csinn_api_enum api) override {
+        auto params = static_cast<typename std::remove_pointer<T>::type*>(this->get());
+        params->base.api = api;
+    }
+};
+
 template <>
 struct ShlStructureTraits<csinn_fc_params*> {
     static void destructor(csinn_fc_params* p) {
         return csinn_free_params(p);
     }
 };
-struct ShlFCParams : public ShlStructure<csinn_fc_params*> {
-    ShlFCParams() {
-        csinn_fc_params* params = static_cast<csinn_fc_params*>(csinn_alloc_params(sizeof(csinn_fc_params), nullptr));
-        OPENVINO_ASSERT(params != nullptr, "Failed to create csinn_fc_params");
-        reset(params);
-    }
+struct ShlFCParams : public ShlParams<csinn_fc_params*> {
+    using ShlParams<csinn_fc_params*>::ShlParams;
+};
 
-    ShlFCParams(const ShlSession& session) {
-        csinn_fc_params* params = static_cast<csinn_fc_params*>(csinn_alloc_params(sizeof(csinn_fc_params), session.get()));
-        OPENVINO_ASSERT(params != nullptr, "Failed to create csinn_fc_params");
-        reset(params);
+template <>
+struct ShlStructureTraits<csinn_diso_params*> {
+    static void destructor(csinn_diso_params* p) {
+        return csinn_free_params(p);
     }
+};
+struct ShlDisoParams : public ShlParams<csinn_diso_params*> {
+    using ShlParams<csinn_diso_params*>::ShlParams;
+};
 
-    ShlFCParams(const ShlSession& session, csinn_api_enum api) : ShlFCParams(session) {
-        setAPI(api);
+template <>
+struct ShlStructureTraits<csinn_conv2d_params*> {
+    static void destructor(csinn_conv2d_params* p) {
+        return csinn_free_params(p);
     }
-
-    void setAPI(csinn_api_enum api) {
-        get()->base.api = api;
-    }
+};
+struct ShlConv2DParams : public ShlParams<csinn_conv2d_params*> {
+    using ShlParams<csinn_conv2d_params*>::ShlParams;
 };
 
 }   // namespace intel_cpu
