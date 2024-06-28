@@ -9,21 +9,6 @@
 namespace ov {
 namespace intel_cpu {
 
-// implement `make_index_sequence` by hand
-template<std::size_t... Indices>
-struct index_sequence {};
-
-template<std::size_t N, std::size_t... Indices>
-struct make_index_sequence_impl : make_index_sequence_impl<N - 1, N - 1, Indices...> {};
-
-template<std::size_t... Indices>
-struct make_index_sequence_impl<0, Indices...> {
-    using type = index_sequence<Indices...>;
-};
-
-template<std::size_t N>
-using make_index_sequence = typename make_index_sequence_impl<N>::type;
-
 class ShlEltwiseExecutor : public EltwiseExecutor {
 public:
     explicit ShlEltwiseExecutor(const ExecutorContext::CPtr context);
@@ -42,10 +27,10 @@ public:
         return implType;
     }
 
-    template<typename Func, typename... Args>
-    void setFunc(Func&& initFunc, Func&& execFunc, Args&&... args) {
-        init_func = [this, initFunc, args...]() { callFunc(initFunc, std::make_tuple(args...)); };
-        exec_func = [this, execFunc, args...]() { callFunc(execFunc, std::make_tuple(args...)); };
+    template<typename InitFunc, typename ExecFunc, typename... Args>
+    void setFunc(InitFunc&& initFunc, ExecFunc&& execFunc, Args&&... args) {
+        init_func = [this, initFunc, args...]()->int { return callFunc(initFunc, std::make_tuple(args...)); };
+        exec_func = [this, execFunc, args...]()->int { return callFunc(execFunc, std::make_tuple(args...)); };
     }
 
 
@@ -55,18 +40,18 @@ private:
     ShlSession sess = {};
     std::vector<ShlTensor> srcTensors, dstTensors;
     std::unique_ptr<IShlParams> params;
-    std::function<void()> init_func;
-    std::function<void()> exec_func;
+    std::function<int()> init_func;
+    std::function<int()> exec_func;
 
     template<typename Func, typename Tuple, size_t... Index>
-    void callFunc(Func&& func, Tuple&& tuple, index_sequence<Index...>) const {
-        func(std::get<Index>(std::forward<Tuple>(tuple))...);
+    int callFunc(Func&& func, Tuple&& tuple, index_sequence<Index...>) const {
+        return func(std::get<Index>(std::forward<Tuple>(tuple))...);
     }
 
     template<typename Func, typename Tuple>
-    void callFunc(Func&& func, Tuple&& tuple) const {
-        callFunc(std::forward<Func>(func), std::forward<Tuple>(tuple),
-                 make_index_sequence<std::tuple_size<typename std::decay<Tuple>::type>::value>{});
+    int callFunc(Func&& func, Tuple&& tuple) const {
+        return callFunc(std::forward<Func>(func), std::forward<Tuple>(tuple),
+                        make_index_sequence<std::tuple_size<typename std::decay<Tuple>::type>::value>{});
     }
 };
 
