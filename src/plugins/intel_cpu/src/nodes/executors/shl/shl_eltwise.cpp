@@ -89,17 +89,14 @@ bool ShlEltwiseExecutor::init(const EltwiseAttrs &eltwiseAttrs,
     switch (shlEltwiseAttrs.algorithm) {
     case Algorithm::EltwiseAdd: 
         params = ov::intel_cpu::make_unique<ShlDisoParams>(sess, CSINN_RVV);
-        return csinn_add_init(srcTensors[0].get(), srcTensors[1].get(), dstTensors[0].get(), static_cast<csinn_diso_params*>(params->get())) == CSINN_TRUE;
-        // setFunc(csinn_add_init, csinn_add, srcTensors[0].get(), srcTensors[1].get(), dstTensors[0].get(), static_cast<csinn_diso_params*>(params->get()));
+        setFunc(csinn_add_init, csinn_add, srcTensors[0].get(), srcTensors[1].get(), dstTensors[0].get(), static_cast<csinn_diso_params*>(params->get()));
         break;
     default:
         OPENVINO_THROW("Unsupported operation type for SHL Eltwise executor: ",
                        static_cast<int>(shlEltwiseAttrs.algorithm));
     }
 
-    // init_func();
-
-    return false;
+    return init_func != nullptr && init_func() == CSINN_TRUE;
 }
 
 void ShlEltwiseExecutor::exec(const std::vector<MemoryCPtr> &src,
@@ -114,17 +111,8 @@ void ShlEltwiseExecutor::exec(const std::vector<MemoryCPtr> &src,
         dstTensors[i].setShape(dst[i]->getDescPtr()->getShape().getStaticDims());
     }
 
-    switch (shlEltwiseAttrs.algorithm) {
-    case Algorithm::EltwiseAdd:
-        OPENVINO_ASSERT(csinn_add(srcTensors[0].get(), srcTensors[1].get(), dstTensors[0].get(), static_cast<csinn_diso_params*>(params->get())) == CSINN_TRUE,
-                        "ShlEltwiseExecutor: failed to execute");
-        break;
-    default:
-        OPENVINO_THROW("Unsupported operation type for SHL Eltwise executor: ",
-                       static_cast<int>(shlEltwiseAttrs.algorithm));
-    }
-
-    // exec_func();
+    OPENVINO_ASSERT(exec_func != nullptr && exec_func() == CSINN_TRUE,
+                    "ShlEltwiseExecutor: failed to execute");
 
     return;
 }
