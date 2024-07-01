@@ -36,8 +36,13 @@ bool ShlEltwiseExecutorBuilder::isSupported(const EltwiseAttrs& eltwiseAttrs,
     };
 
     switch (eltwiseAttrs.algorithm) {
-        // Support EltwiseAdd with `FP32` precision only for now 
+        // Support eltwise ops with `FP32` precision only for now 
         case Algorithm::EltwiseAdd:
+        case Algorithm::EltwiseSubtract:
+        case Algorithm::EltwiseMultiply:
+        case Algorithm::EltwiseDivide:
+        case Algorithm::EltwiseExp:
+        case Algorithm::EltwiseRelu:
             if (!(checkPrecision({ov::element::f32, ov::element::f32}, ov::element::f32))) {
                 log_unsupported_prec(srcDescs, dstDescs, eltwiseAttrs.algorithm);
                 return false;
@@ -87,9 +92,29 @@ bool ShlEltwiseExecutor::init(const EltwiseAttrs &eltwiseAttrs,
     }
 
     switch (shlEltwiseAttrs.algorithm) {
-    case Algorithm::EltwiseAdd: 
+    case Algorithm::EltwiseAdd:
         params = ov::intel_cpu::make_unique<ShlDisoParams>(sess, CSINN_RVV);
         setFunc(csinn_add_init, csinn_add, srcTensors[0].get(), srcTensors[1].get(), dstTensors[0].get(), static_cast<csinn_diso_params*>(params->get()));
+        break;
+    case Algorithm::EltwiseSubtract:
+        params = ov::intel_cpu::make_unique<ShlDisoParams>(sess, CSINN_RVV);
+        setFunc(csinn_sub_init, csinn_sub, srcTensors[0].get(), srcTensors[1].get(), dstTensors[0].get(), static_cast<csinn_diso_params*>(params->get()));
+        break;
+    case Algorithm::EltwiseMultiply:
+        params = ov::intel_cpu::make_unique<ShlDisoParams>(sess, CSINN_RVV);
+        setFunc(csinn_mul_init, csinn_mul, srcTensors[0].get(), srcTensors[1].get(), dstTensors[0].get(), static_cast<csinn_diso_params*>(params->get()));
+        break;
+    case Algorithm::EltwiseDivide:
+        params = ov::intel_cpu::make_unique<ShlDisoParams>(sess, CSINN_RVV);
+        setFunc(csinn_div_init, csinn_div, srcTensors[0].get(), srcTensors[1].get(), dstTensors[0].get(), static_cast<csinn_diso_params*>(params->get()));
+        break;
+    case Algorithm::EltwiseExp:
+        params = ov::intel_cpu::make_unique<ShlSisoParams>(sess, CSINN_RVV);
+        setFunc(csinn_exp_init, csinn_exp, srcTensors[0].get(), dstTensors[0].get(), static_cast<csinn_siso_params*>(params->get()));
+        break;
+    case Algorithm::EltwiseRelu:
+        params = ov::intel_cpu::make_unique<ShlReluParams>(sess, CSINN_RVV);
+        setFunc(csinn_relu_init, csinn_relu, srcTensors[0].get(), dstTensors[0].get(), static_cast<csinn_relu_params*>(params->get()));
         break;
     default:
         OPENVINO_THROW("Unsupported operation type for SHL Eltwise executor: ",

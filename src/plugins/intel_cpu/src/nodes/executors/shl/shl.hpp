@@ -229,6 +229,26 @@ struct ShlDisoParams : public ShlParams<csinn_diso_params*> {
 };
 
 template <>
+struct ShlStructureTraits<csinn_siso_params*> {
+    static void destructor(csinn_siso_params* p) {
+        return csinn_free_params(p);
+    }
+};
+struct ShlSisoParams : public ShlParams<csinn_siso_params*> {
+    using ShlParams<csinn_siso_params*>::ShlParams;
+};
+
+template <>
+struct ShlStructureTraits<csinn_relu_params*> {
+    static void destructor(csinn_relu_params* p) {
+        return csinn_free_params(p);
+    }
+};
+struct ShlReluParams : public ShlParams<csinn_relu_params*> {
+    using ShlParams<csinn_relu_params*>::ShlParams;
+};
+
+template <>
 struct ShlStructureTraits<csinn_conv2d_params*> {
     static void destructor(csinn_conv2d_params* p) {
         return csinn_free_params(p);
